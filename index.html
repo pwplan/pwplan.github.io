@@ -1,1 +1,195 @@
-<h1>test</h1>
+<!DOCTYPE html>
+<html lang="de" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://www.chartjs.org/dist/2.8.0/Chart.min.js"></script>
+  <title>Powerplan</title>
+
+  <style>
+    body {
+      margin: 20px;
+    }
+
+    .collapsible {
+      background-color: #777;
+      color: white;
+      cursor: pointer;
+      padding: 18px;
+      width: 100%;
+      border: none;
+      text-align: left;
+      outline: none;
+      font-size: 15px;
+    }
+
+    .active,
+    .collapsible:hover {
+      background-color: #555;
+    }
+
+    .content {
+      padding: 0 18px;
+      display: none;
+      overflow: hidden;
+      background-color: #f1f1f1;
+    }
+
+    p {
+      font-family: Arial, Helvetica, Comic Sans MS, Courier;
+    }
+
+    h3 {
+      font-family: Arial, Helvetica, Comic Sans MS, Courier;
+    }
+
+    .footer {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <h3>Kohlestrom oder Sonne/Wind -- Ihre Entscheidung </h3>
+  <button class="collapsible">mehr erfahren ... </button>
+  <div class="content">
+    <p>
+      Wenn Erneuerbare Energien im Überfluss bereitstehen, ist der Strompreis niedrig.
+      <br>Schalten sie Ihre Spülmaschine, Ihren Trockner oder die Waschmaschine ein, wenn der Strompreis niedrig ist, dann reduzieren sie den Verbrauch von Kohlestrom um etwa eine Kilowattstunde zugunsten von Sonnen- oder Windstrom.
+      <br><br>
+      Da der Strompreis (auf Basis der Energie-Prognosen) einen Tag im Voraus feststeht, können Sie die Spülmaschine auf die entsprechende Uhrzeit programmieren.
+      <br><br>Eine Million Menschen sparen auf diese Weise <b>täglich</b> knapp <b>360 Tonnen CO2</b> .
+      <br><br>
+    </p>
+  </div>
+
+  <script>
+    var coll = document.getElementsByClassName("collapsible");
+    var i;
+
+    for (i = 0; i < coll.length; i++) {
+      coll[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        var content = this.nextElementSibling;
+        if (content.style.display === "block") {
+          content.style.display = "none";
+        } else {
+          content.style.display = "block";
+        }
+      });
+    }
+  </script>
+
+  <center><canvas id="myChart"></canvas></center>
+  <br>
+  <h3 id="besttime">Bitte aktivieren sie JavaScript in ihrem Browser um diese Seite sehen zu können!</h3>
+  <script>
+    var data = {"data":{"03.03.2020-00:00":"26.04","03.03.2020-01:00":"25.04","03.03.2020-02:00":"24.53","03.03.2020-03:00":"24.10","03.03.2020-04:00":"24.45","03.03.2020-05:00":"28.50","03.03.2020-06:00":"35.68","03.03.2020-07:00":"42.30","03.03.2020-08:00":"45.60","03.03.2020-09:00":"41.68","03.03.2020-10:00":"37.97","03.03.2020-11:00":"34.83","03.03.2020-12:00":"31.82","03.03.2020-13:00":"33.96","03.03.2020-14:00":"35.93","03.03.2020-15:00":"37.66","03.03.2020-16:00":"39.84","03.03.2020-17:00":"41.73","03.03.2020-18:00":"55.98","03.03.2020-19:00":"56.90","03.03.2020-20:00":"40.93","03.03.2020-21:00":"38.19","03.03.2020-22:00":"35.03","03.03.2020-23:00":"31.29","04.03.2020-00:00":"30.10","04.03.2020-01:00":"28.10","04.03.2020-02:00":"27.08","04.03.2020-03:00":"26.80","04.03.2020-04:00":"26.80","04.03.2020-05:00":"30.05","04.03.2020-06:00":"36.51","04.03.2020-07:00":"47.20","04.03.2020-08:00":"54.75","04.03.2020-09:00":"50.32","04.03.2020-10:00":"44.23","04.03.2020-11:00":"41.09","04.03.2020-12:00":"37.90","04.03.2020-13:00":"35.97","04.03.2020-14:00":"35.00","04.03.2020-15:00":"35.88","04.03.2020-16:00":"39.50","04.03.2020-17:00":"48.49","04.03.2020-18:00":"64.70","04.03.2020-19:00":"63.34","04.03.2020-20:00":"43.58","04.03.2020-21:00":"37.53","04.03.2020-22:00":"33.92","04.03.2020-23:00":"31.82"},"besttime":"tomorrow-03:00"}
+
+    var time = Object.keys(data.data)
+    var price = [];
+    for (i = 0; i < time.length; i++) {
+      price.push(data.data[time[i]])
+    }
+
+    var besttime = "";
+    var besthour = data.besttime;
+    var d = new Date();
+
+    function getFormattedTime(dt) {
+      hour = dt.getHours();
+      minute = dt.getMinutes();
+      if ((String(hour)).length == 1) hour = '0' + hour;
+      if ((String(minute)).length == 1) minute = '0' + minute;
+      return hour + ':' + minute;
+    }
+
+    if (besthour.replace("today", "") != besthour) {
+      aktdate = getFormattedTime(d).split(":")
+      besthourtime = besthour.replace("today-", "").split(":")
+      diffhour = Number(besthourtime[0]) - Number(aktdate[0])
+      diffmin = Number(besthourtime[1]) - Number(aktdate[1])
+      besttime = (diffhour + (diffmin / 60)).toFixed(2)
+    } else if (besthour.replace("tomorrow", "") != besthour) {
+      aktdate = getFormattedTime(d).split(":")
+      besthourtime = besthour.replace("tomorrow-", "").split(":")
+      diffhour = Number(besthourtime[0]) - Number(aktdate[0])
+      diffmin = Number(besthourtime[1]) - Number(aktdate[1])
+      besttime = (diffhour + (diffmin / 60) + 24).toFixed(2)
+    }
+
+    document.getElementById('besttime').innerHTML = "Beste zeit zum Starten: " + besthour.replace("today-", "Heute ").replace("tomorrow-", "Morgen ") + " (in " + besttime + " Stunden)"
+    var ctx = document.getElementById('myChart').getContext('2d');
+
+    document.getElementById('myChart').width = window.outerWidth / 1.2
+    document.getElementById('myChart').height = ((window.outerHeight / 1.2) / 2)
+
+    window.chartColors = {
+      red: 'rgb(255, 99, 132)',
+      orange: 'rgb(255, 159, 64)',
+      yellow: 'rgb(255, 205, 86)',
+      green: 'rgb(75, 192, 192)',
+      blue: 'rgb(54, 162, 235)',
+      purple: 'rgb(153, 102, 255)',
+      grey: 'rgb(201, 203, 207)'
+    };
+
+    var myChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: time,
+        datasets: [{
+          label: 'Preis (€)',
+          backgroundColor: window.chartColors.orange,
+          borderColor: window.chartColors.yellow,
+          data: price,
+          fill: false,
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        responsive: false,
+        title: {
+          display: true,
+          text: 'Power Plan'
+        },
+        tooltips: {
+          mode: 'index',
+          intersect: false,
+        },
+        hover: {
+          mode: 'nearest',
+          intersect: true
+        },
+        scales: {
+          xAxes: [{
+            display: true,
+            scaleLabel: {
+              display: true,
+              labelString: 'Uhrzeit (h)'
+            }
+          }],
+          yAxes: [{
+            display: true,
+            scaleLabel: {
+              display: true,
+              labelString: 'Preis (€)'
+            }
+          }]
+        }
+      }
+    });
+  </script>
+
+  <div class="footer">
+    <p>Powerplan | <a href="index.html">Home</a> - <a href="api.html">API</a> </p>
+  </div>
+
+</body>
+
+</html>
